@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IntraHub — Dashboard de Comunicação Interna</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #161920;
+      --surface2: #1e2230;
+      --border: #272c3d;
+      --accent: #5c6bff;
+      --accent2: #00e5b0;
+      --warn: #ff5c5c;
+      --text: #e8eaf2;
+      --muted: #6b7094;
+      --card-radius: 14px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: auto 1fr;
+      grid-template-areas: "sidebar topbar" "sidebar main";
+    }
+
+    /* TOPBAR */
+    #topbar {
+      grid-area: topbar;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 60px;
+    }
+    .topbar-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .api-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #666;
+      transition: background 0.4s;
+    }
+    .api-dot.ok { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+    .api-dot.error { background: var(--warn); }
+    .api-dot.loading { animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* SIDEBAR */
+    #sidebar {
+      grid-area: sidebar;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+    .logo {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: -0.02em;
+    }
+    .logo span { color: var(--accent); }
+
+    .sidebar-section {
+      padding: 16px 12px 8px;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      margin: 2px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--muted);
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(92,107,255,0.12); color: var(--accent); border-color: rgba(92,107,255,0.25); }
+    .nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.65rem;
+      border-radius: 10px;
+      padding: 2px 6px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* MAIN */
+    #main {
+      grid-area: main;
+      overflow-y: auto;
+      padding: 28px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)} }
+
+    .page-header {
+      margin-bottom: 24px;
+    }
+    .page-header h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.7rem;
+    }
+    .page-header p {
+      color: var(--muted);
+      font-size: 0.875rem;
+      margin-top: 4px;
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 20px;
+    }
+    .card-sm { padding: 14px 18px; }
+
+    /* GRID */
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 24px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-posts { display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+    /* STAT CARD */
+    .stat-card { padding: 20px; }
+    .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-family: 'IBM Plex Mono', monospace; }
+    .stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin: 4px 0; }
+    .stat-value.blue { color: var(--accent); }
+    .stat-value.green { color: var(--accent2); }
+    .stat-value.red { color: var(--warn); }
+    .stat-sub { font-size: 0.78rem; color: var(--muted); }
+
+    /* LOADING */
+    .loading-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 60px 20px; gap: 12px; color: var(--muted);
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ERROR */
+    .error-state {
+      background: rgba(255,92,92,0.08);
+      border: 1px solid rgba(255,92,92,0.3);
+      border-radius: var(--card-radius);
+      padding: 20px;
+      color: var(--warn);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    /* POST CARD */
+    .post-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .post-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent);
+      transform: scaleY(0);
+      transition: transform 0.2s;
+      transform-origin: bottom;
+    }
+    .post-card:hover { border-color: rgba(92,107,255,0.4); transform: translateX(2px); }
+    .post-card:hover::before { transform: scaleY(1); }
+    .post-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-transform: capitalize;
+      margin-bottom: 6px;
+    }
+    .post-body { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+    .post-meta {
+      display: flex; gap: 12px; align-items: center; margin-top: 12px;
+      font-size: 0.72rem; color: var(--muted); font-family: 'IBM Plex Mono', monospace;
+    }
+    .post-meta .tag {
+      background: rgba(92,107,255,0.15);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* USER CARD */
+    .user-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .user-card:hover { border-color: rgba(0,229,176,0.35); }
+    .user-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
+    .user-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; }
+    .user-username { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--accent); margin-top: 2px; }
+    .user-email { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    .user-company { font-size: 0.75rem; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-style: italic; }
+
+    /* COMMENT */
+    .comment {
+      padding: 14px;
+      background: var(--surface2);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent2);
+      margin-bottom: 10px;
+    }
+    .comment-name { font-weight: 600; font-size: 0.82rem; }
+    .comment-email { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+    .comment-body { font-size: 0.8rem; color: var(--muted); margin-top: 8px; line-height: 1.55; }
+
+    /* SECTION TITLE */
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* USERS GRID */
+    .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 14px; }
+
+    /* DETAIL VIEW */
+    .detail-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .detail-overlay.open { display: flex; }
+    .detail-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 90vw; max-width: 700px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 28px;
+      position: relative;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .detail-close {
+      position: absolute; top: 16px; right: 16px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); width: 32px; height: 32px;
+      border-radius: 8px; cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .detail-close:hover { background: var(--border); }
+
+    /* TECH BADGE */
+    .tech-stack {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;
+    }
+    .tech-badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    /* SEARCH */
+    .search-bar {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      width: 100%; margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-bar:focus { border-color: var(--accent); }
+
+    /* FILTER BAR */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .filter-btn:hover, .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ARCHITECTURE CARD */
+    .arch-diagram {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 16px;
+      padding: 24px;
+      background: var(--surface2);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .arch-box {
+      text-align: center; padding: 16px;
+      border-radius: 10px; border: 1px solid var(--border);
+    }
+    .arch-box.client { background: rgba(92,107,255,0.1); border-color: rgba(92,107,255,0.35); }
+    .arch-box.server { background: rgba(0,229,176,0.08); border-color: rgba(0,229,176,0.3); }
+    .arch-box-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; }
+    .arch-box-sub { font-size: 0.72rem; color: var(--muted); margin-top: 4px; font-family: 'IBM Plex Mono', monospace; }
+    .arch-arrow { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 0.7rem; font-family: 'IBM Plex Mono', monospace; }
+    .arrow-line { font-size: 1.2rem; color: var(--accent); }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* RESPONSIVE hint */
+    .scroll-hint { display: none; }
+    @media (max-width: 900px) {
+      body { grid-template-columns: 1fr; grid-template-areas: "topbar" "main"; }
+      #sidebar { display: none; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .scroll-hint { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="logo">Intra<span>Hub</span></div>
+  <div class="sidebar-section">Navegação</div>
+  <div class="nav-item active" onclick="showPage('home', this)"><span class="icon">⬡</span> Dashboard</div>
+  <div class="nav-item" onclick="showPage('posts', this)"><span class="icon">◈</span> Postagens <span class="nav-badge" id="badge-posts">…</span></div>
+  <div class="nav-item" onclick="showPage('users', this)"><span class="icon">◉</span> Usuários <span class="nav-badge" id="badge-users">…</span></div>
+
+  <div class="sidebar-section">Sistema</div>
+  <div class="nav-item" onclick="showPage('arch', this)"><span class="icon">⬡</span> Arquitetura</div>
+
+  <div class="sidebar-bottom">
+    <div>JSONPlaceholder API</div>
+    <div style="margin-top:4px; color: var(--accent2)" id="status-text">Conectando…</div>
+  </div>
+</nav>
+
+<!-- TOPBAR -->
+<header id="topbar">
+  <div class="topbar-title">DASHBOARD DE COMUNICAÇÃO INTERNA</div>
+  <div class="api-status">
+    <div class="api-dot loading" id="api-dot"></div>
+    <span id="api-label">Verificando API…</span>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main">
+
+  <!-- HOME PAGE -->
+  <div class="page active" id="page-home">
+    <div class="page-header">
+      <h1>Visão Geral</h1>
+      <p>Dados em tempo real via JSONPlaceholder REST API</p>
+    </div>
+
+    <div class="grid-3">
+      <div class="card stat-card">
+        <div class="stat-label">Total de Usuários</div>
+        <div class="stat-value blue" id="stat-users">—</div>
+        <div class="stat-sub">Colaboradores cadastrados</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Postagens Publicadas</div>
+        <div class="stat-value green" id="stat-posts">—</div>
+        <div class="stat-sub">Conteúdo disponível</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Comentários</div>
+        <div class="stat-value" id="stat-comments">—</div>
+        <div class="stat-sub">Interações registradas</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="section-title">Postagens Recentes</div>
+        <div id="recent-posts">
+          <div class="loading-state"><div class="spinner"></div><span>Carregando via GET /posts…</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">Equipe em Destaque</div>
+        <div id="featured-users">
+          <div class="loading-state"><div class="spinner"></div><span>Carregando via GET /users…</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POSTS PAGE -->
+  <div class="page" id="page-posts">
+    <div class="page-header">
+      <h1>Postagens</h1>
+      <p>Todas as publicações — clique para ver comentários</p>
+    </div>
+    <input class="search-bar" id="search-posts" type="text" placeholder="🔍  Buscar postagens por título…" oninput="filterPosts()" />
+    <div class="filter-bar" id="user-filters"></div>
+    <div id="posts-list">
+      <div class="loading-state"><div class="spinner"></div><span>Carregando via GET /posts…</span></div>
+    </div>
+  </div>
+
+  <!-- USERS PAGE -->
+  <div class="page" id="page-users">
+    <div class="page-header">
+      <h1>Usuários</h1>
+      <p>Perfis dos colaboradores — clique para ver postagens</p>
+    </div>
+    <input class="search-bar" id="search-users" type="text" placeholder="🔍  Buscar usuários por nome ou empresa…" oninput="filterUsers()" />
+    <div class="users-grid" id="users-grid">
+      <div class="loading-state"><div class="spinner"></div><span>Carregando via GET /users…</span></div>
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE PAGE -->
+  <div class="page" id="page-arch">
+    <div class="page-header">
+      <h1>Arquitetura do Sistema</h1>
+      <p>Padrão Cliente-Servidor com MVC e consumo REST</p>
+    </div>
+    <div class="arch-diagram">
+      <div class="arch-box client">
+        <div class="arch-box-title">📱 Cliente (View + Controller)</div>
+        <div class="arch-box-sub">HTML / CSS / JavaScript</div>
+        <div class="arch-box-sub" style="margin-top:8px">• Renderização da UI<br>• Gerenciamento de estado<br>• Event Handlers</div>
+      </div>
+      <div class="arch-arrow">
+        <div class="arrow-line">→ GET /posts</div>
+        <div class="arrow-line">→ GET /users</div>
+        <div class="arrow-line">→ GET /comments</div>
+        <div style="margin-top:4px">HTTP/REST</div>
+        <div class="arrow-line">← JSON</div>
+      </div>
+      <div class="arch-box server">
+        <div class="arch-box-title">☁️ Servidor (API REST)</div>
+        <div class="arch-box-sub">JSONPlaceholder</div>
+        <div class="arch-box-sub" style="margin-top:8px">• /users (10 registros)<br>• /posts (100 registros)<br>• /comments (500 registros)</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="section-title">Camada Model</div>
+        <p style="font-size:0.83rem;color:var(--muted);line-height:1.6">A camada <strong style="color:var(--text)">Model</strong> encapsula o acesso à API. A função <code style="color:var(--accent);font-family:'IBM Plex Mono',monospace">fetchWithTimeout()</code> realiza requisições GET com <strong style="color:var(--text)">timeout de 8s</strong>. Em caso de falha HTTP (404, 500) ou rede, lança exceções capturadas pelo Controller.</p>
+        <div class="tech-stack">
+          <span class="tech-badge">fetch() API</span>
+          <span class="tech-badge">Promise</span>
+          <span class="tech-badge">AbortController</span>
+          <span class="tech-badge">try/catch</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Tratamento de Falhas</div>
+        <div style="font-size:0.82rem;color:var(--muted);line-height:1.7">
+          <div>⏱ <strong style="color:var(--text)">Timeout:</strong> Requisições abortadas após 8 segundos via AbortController</div>
+          <div style="margin-top:6px">❌ <strong style="color:var(--text)">HTTP Errors:</strong> Status ≠ 200 lança Error com código</div>
+          <div style="margin-top:6px">🔄 <strong style="color:var(--text)">Fallback:</strong> UI exibe mensagem amigável sem travar</div>
+          <div style="margin-top:6px">🛡 <strong style="color:var(--text)">try/catch:</strong> Cada chamada isolada para falha localizada</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Histórias de Usuário</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:4px">
+        <div class="comment" style="border-left-color:var(--accent)">
+          <div class="comment-name">US01 — Listar postagens</div>
+          <div class="comment-body">"Como funcionário, desejo ver uma lista com as postagens recentes para me manter atualizado sobre o que acontece na empresa."</div>
+        </div>
+        <div class="comment" style="border-left-color:var(--accent)">
+          <div class="comment-name">US02 — Ver comentários</div>
+          <div class="comment-body">"Como funcionário, desejo visualizar os comentários de uma postagem para acompanhar as discussões e feedbacks da equipe."</div>
+        </div>
+        <div class="comment" style="border-left-color:var(--accent)">
+          <div class="comment-name">US03 — Perfis de usuários</div>
+          <div class="comment-body">"Como gestor, desejo consultar o perfil de cada colaborador para conhecer seu contato, empresa e postagens associadas."</div>
+        </div>
+        <div class="comment" style="border-left-color:var(--accent)">
+          <div class="comment-name">US04 — Filtrar por autor</div>
+          <div class="comment-body">"Como funcionário, desejo filtrar as postagens por autor para encontrar rapidamente o conteúdo de um colega específico."</div>
+        </div>
+        <div class="comment" style="border-left-color:var(--accent)">
+          <div class="comment-name">US05 — Resiliência a falhas</div>
+          <div class="comment-body">"Como usuário, desejo que o sistema me informe de forma clara quando a API estiver indisponível, sem que o dashboard trave ou perca dados."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- DETAIL OVERLAY (posts + comments) -->
+<div class="detail-overlay" id="overlay">
+  <div class="detail-panel">
+    <button class="detail-close" onclick="closeOverlay()">✕</button>
+    <div id="overlay-content"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// MODEL — Acesso à API com resiliência
+// ============================================================
+const API = 'https://jsonplaceholder.typicode.com';
+const TIMEOUT_MS = 8000;
+
+async function fetchWithTimeout(url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Timeout: API demorou mais de 8s para responder.');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ============================================================
+// DADOS BR — Substituição de nomes/textos fictícios por PT-BR
+// ============================================================
+const NOMES_BR = [
+  "Carlos Eduardo Silva", "Ana Paula Ferreira", "Roberto Souza",
+  "Juliana Costa", "Marcelo Oliveira", "Fernanda Lima",
+  "Diego Almeida", "Patrícia Rocha", "Thiago Nascimento", "Camila Martins"
+];
+const USERNAMES_BR = [
+  "carloseduardo", "anapaulaf", "robertosouza", "julianacos",
+  "marcelooliv", "fernandalima", "diegoalm", "patriciarocha",
+  "thiagonasc", "camilamart"
+];
+const EMAILS_BR = [
+  "c.silva@empresa.com.br", "a.ferreira@empresa.com.br", "r.souza@empresa.com.br",
+  "j.costa@empresa.com.br", "m.oliveira@empresa.com.br", "f.lima@empresa.com.br",
+  "d.almeida@empresa.com.br", "p.rocha@empresa.com.br", "t.nascimento@empresa.com.br",
+  "c.martins@empresa.com.br"
+];
+const EMPRESAS_BR = [
+  "TechBrasil Soluções", "Inova Digital", "Conecta Sistemas",
+  "DataBR Tecnologia", "SoftNação", "Nexus Desenvolvimento",
+  "Pulsar Inovações", "OmniCode", "Vertex Soft", "BlueSky Tech"
+];
+const TITULOS_BR = [
+  "Boas-vindas ao novo sistema de comunicação interna",
+  "Atualização sobre o projeto de integração de sistemas",
+  "Reunião de alinhamento: pauta e próximos passos",
+  "Nova política de home office — leia com atenção",
+  "Resultados do trimestre: superamos as metas!",
+  "Treinamento obrigatório de segurança da informação",
+  "Comunicado: mudança no horário de expediente",
+  "Lançamento do portal de benefícios para colaboradores",
+  "Pesquisa de clima organizacional — sua opinião importa",
+  "Atualização do código de conduta da empresa",
+  "Novo processo de onboarding para novos colaboradores",
+  "Alerta de manutenção programada nos sistemas internos",
+  "Celebração: 5 anos de empresa! Venha comemorar",
+  "Vagas internas abertas — indique um colega",
+  "Relatório de sustentabilidade do segundo semestre",
+  "Revisão do plano estratégico para o próximo ano",
+  "Workshop de inovação: inscrições abertas",
+  "Dicas de ergonomia para home office",
+  "Atualização da política de uso de ferramentas digitais",
+  "Comunicado da diretoria sobre reestruturação de times",
+  "Como usar o novo sistema de ponto eletrônico",
+  "Campanha de doação de agasalhos — participe!",
+  "Integração entre os times de produto e engenharia",
+  "Proposta de novo fluxo de aprovação de projetos",
+  "Reconhecimento: colaboradores destaque do mês",
+  "Aviso sobre o recesso de fim de ano",
+  "Manual de boas práticas para reuniões remotas",
+  "Nova ferramenta de gestão de tarefas disponível",
+  "Resultados da pesquisa de satisfação interna",
+  "Comunicado sobre mudança no sistema de folha de pagamento",
+  "Processo de feedback 360° — como participar",
+  "Programa de saúde mental: confira os benefícios",
+  "Nota sobre episódio de lentidão nos sistemas de ontem",
+  "Novo canal de ouvidoria interna disponível",
+  "Calendário de feriados e pontos facultativos",
+  "Kick-off do projeto Transformação Digital",
+  "Guia de uso das salas de reunião do escritório",
+  "Atualização sobre o plano de saúde corporativo",
+  "Como solicitar equipamentos e materiais de trabalho",
+  "Resumo do evento de integração da semana passada",
+  "Novidades da plataforma de e-learning corporativo",
+  "Resultado da pesquisa: preferências de trabalho híbrido",
+  "Procedimento para solicitação de férias no RH",
+  "Alinhamento sobre metas e OKRs do próximo ciclo",
+  "Política de reembolso de despesas atualizada",
+  "Dicas para aumentar a produtividade no dia a dia",
+  "Comunicado sobre licenças e afastamentos",
+  "Novo contrato com fornecedor estratégico aprovado",
+  "Parabéns ao time de vendas pelo recorde do trimestre",
+  "Lembrete: prazo de entrega de relatórios mensais"
+];
+const CORPOS_BR = [
+  "Gostaríamos de informar todos os colaboradores sobre as atualizações em nossos processos internos. Em caso de dúvidas, entrem em contato com o RH.",
+  "Após análise cuidadosa, a diretoria aprovou as mudanças propostas. A implementação será gradual e comunicaremos cada etapa com antecedência.",
+  "Convidamos todos os membros da equipe para participar desta importante iniciativa. A colaboração de cada um é fundamental para o sucesso coletivo.",
+  "Estamos promovendo ajustes nos fluxos de trabalho para aumentar a eficiência e melhorar a experiência de todos os colaboradores.",
+  "É com satisfação que compartilhamos os resultados deste período. O esforço conjunto de todas as equipes foi essencial para alcançar este marco.",
+  "Pedimos que todos atentem para os prazos estabelecidos e sigam os procedimentos definidos. Em caso de dúvidas, comunicar o gestor imediatamente.",
+  "Esta comunicação visa alinhar expectativas e garantir que todos estejam cientes das decisões da liderança. Estamos à disposição para esclarecimentos.",
+  "As alterações entrarão em vigor a partir da próxima semana. Qualquer impacto nas rotinas deve ser reportado ao time responsável.",
+  "Agradecemos a todos pelo comprometimento e dedicação. Seguimos juntos em busca dos nossos objetivos organizacionais.",
+  "O RH reforça a importância de manter os dados cadastrais atualizados no sistema, garantindo que todos os benefícios sejam corretamente aplicados."
+];
+const COMENTARIOS_BR = [
+  "Ótima iniciativa! Estava esperando por essa atualização.",
+  "Obrigado pela comunicação transparente. Fica muito mais fácil acompanhar assim.",
+  "Tenho algumas dúvidas sobre o prazo. Poderia detalhar mais?",
+  "Excelente! Isso vai melhorar muito o nosso fluxo de trabalho.",
+  "Concordo plenamente com a proposta. Apoio total.",
+  "Vou repassar para o meu time assim que possível.",
+  "Seria possível ter uma versão em PDF para salvar?",
+  "Boa comunicação! Muito mais claro do que o formato anterior.",
+  "O prazo é bastante apertado para o nosso setor. Precisamos conversar.",
+  "Parabéns à equipe responsável por essa iniciativa!"
+];
+const NOMES_COMENTADORES = [
+  "Lucas Pereira", "Marina Gomes", "Rafael Torres", "Aline Batista",
+  "Bruno Cavalcante", "Larissa Mendes", "Felipe Araújo", "Vanessa Ribeiro",
+  "Gustavo Cardoso", "Priscila Monteiro"
+];
+
+function ptbrPost(post) {
+  const idx = (post.id - 1) % TITULOS_BR.length;
+  const bodyIdx = (post.id - 1) % CORPOS_BR.length;
+  return { ...post, title: TITULOS_BR[idx], body: CORPOS_BR[bodyIdx] };
+}
+function ptbrUser(user) {
+  const i = user.id - 1;
+  return {
+    ...user,
+    name: NOMES_BR[i] || user.name,
+    username: USERNAMES_BR[i] || user.username,
+    email: EMAILS_BR[i] || user.email,
+    company: { ...user.company, name: EMPRESAS_BR[i] || user.company.name }
+  };
+}
+function ptbrComment(c) {
+  const bodyIdx = (c.id - 1) % COMENTARIOS_BR.length;
+  const nameIdx = (c.id - 1) % NOMES_COMENTADORES.length;
+  const firstName = NOMES_COMENTADORES[nameIdx].split(' ')[0].toLowerCase();
+  return {
+    ...c,
+    name: `Comentário de ${NOMES_COMENTADORES[nameIdx]}`,
+    email: `${firstName}@empresa.com.br`,
+    body: COMENTARIOS_BR[bodyIdx]
+  };
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let allPosts = [], allUsers = [], allComments = [];
+let activeFilter = null;
+
+// ============================================================
+// CONTROLLER — Carregamento inicial
+// ============================================================
+async function loadAll() {
+  setApiStatus('loading', 'Carregando dados…');
+  try {
+    const [rawUsers, rawPosts, rawComments] = await Promise.all([
+      fetchWithTimeout(`${API}/users`),
+      fetchWithTimeout(`${API}/posts`),
+      fetchWithTimeout(`${API}/comments`)
+    ]);
+    allUsers    = rawUsers.map(ptbrUser);
+    allPosts    = rawPosts.slice(0, 15).map(ptbrPost);
+    allComments = rawComments.filter(c => allPosts.some(p => p.id === c.postId)).map(ptbrComment);
+    setApiStatus('ok', `API OK — ${allPosts.length} posts, ${allUsers.length} usuários`);
+    document.getElementById('status-text').textContent = 'API Conectada ✓';
+    document.getElementById('badge-posts').textContent = allPosts.length;
+    document.getElementById('badge-users').textContent = allUsers.length;
+    renderHome();
+    renderPostsList();
+    renderUsersGrid();
+    buildUserFilters();
+  } catch(err) {
+    setApiStatus('error', 'Falha na API');
+    document.getElementById('status-text').textContent = '⚠ Offline';
+    showError('recent-posts', err.message);
+    showError('featured-users', err.message);
+    showError('posts-list', err.message);
+    showError('users-grid', err.message);
+  }
+}
+
+function setApiStatus(state, label) {
+  const dot = document.getElementById('api-dot');
+  const lbl = document.getElementById('api-label');
+  dot.className = 'api-dot ' + state;
+  lbl.textContent = label;
+}
+
+function showError(containerId, msg) {
+  const el = document.getElementById(containerId);
+  if(el) el.innerHTML = `<div class="error-state">⚠ Falha na requisição: ${msg}</div>`;
+}
+
+// ============================================================
+// VIEW — Renderizadores
+// ============================================================
+function getUserName(userId) {
+  const u = allUsers.find(u => u.id === userId);
+  return u ? u.name : `User #${userId}`;
+}
+
+function renderHome() {
+  document.getElementById('stat-users').textContent = allUsers.length;
+  document.getElementById('stat-posts').textContent = allPosts.length;
+  document.getElementById('stat-comments').textContent = allComments.length;
+
+  // Recent posts (top 5)
+  const recent = allPosts.slice(0, 5);
+  document.getElementById('recent-posts').innerHTML = recent.map(p => postCardHTML(p, true)).join('');
+
+  // Featured users (first 4)
+  document.getElementById('featured-users').innerHTML = allUsers.slice(0,4).map(u => `
+    <div class="card card-sm" style="margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:border-color 0.2s"
+         onclick="openUserDetail(${u.id})"
+         onmouseover="this.style.borderColor='rgba(0,229,176,0.35)'"
+         onmouseout="this.style.borderColor='var(--border)'">
+      <div class="user-avatar" style="width:36px;height:36px;font-size:0.85rem;flex-shrink:0">${u.name.charAt(0)}</div>
+      <div>
+        <div style="font-weight:600;font-size:0.88rem">${u.name}</div>
+        <div style="font-size:0.72rem;color:var(--muted);font-family:'IBM Plex Mono',monospace">@${u.username}</div>
+      </div>
+      <div style="margin-left:auto;font-size:0.72rem;color:var(--accent);font-family:'IBM Plex Mono',monospace">
+        ${allPosts.filter(p=>p.userId===u.id).length} posts
+      </div>
+    </div>
+  `).join('');
+}
+
+function postCardHTML(p, mini = false) {
+  const author = getUserName(p.userId);
+  const commentCount = allComments.filter(c => c.postId === p.id).length;
+  return `
+    <div class="post-card" onclick="openPostDetail(${p.id})">
+      <div class="post-title">${p.title}</div>
+      ${!mini ? `<div class="post-body">${p.body}</div>` : ''}
+      <div class="post-meta">
+        <span class="tag">#${p.userId}</span>
+        <span>👤 ${author}</span>
+        <span>💬 ${commentCount}</span>
+        <span style="margin-left:auto">ID: ${p.id}</span>
+      </div>
+    </div>`;
+}
+
+function renderPostsList() {
+  renderFilteredPosts();
+}
+
+function renderFilteredPosts() {
+  const query = (document.getElementById('search-posts')?.value || '').toLowerCase();
+  let filtered = activeFilter
+    ? allPosts.filter(p => p.userId === activeFilter)
+    : allPosts;
+  if (query) filtered = filtered.filter(p => p.title.toLowerCase().includes(query));
+  document.getElementById('posts-list').innerHTML = filtered.length
+    ? `<div class="grid-posts">${filtered.map(p => postCardHTML(p)).join('')}</div>`
+    : `<div style="color:var(--muted);padding:30px;text-align:center;font-style:italic">Nenhuma postagem encontrada.</div>`;
+}
+
+function filterPosts() { renderFilteredPosts(); }
+
+function buildUserFilters() {
+  const bar = document.getElementById('user-filters');
+  bar.innerHTML = `<button class="filter-btn active" onclick="setFilter(null,this)">Todos</button>`
+    + allUsers.map(u => `<button class="filter-btn" onclick="setFilter(${u.id},this)">@${u.username}</button>`).join('');
+}
+
+function setFilter(userId, btn) {
+  activeFilter = userId;
+  document.querySelectorAll('#user-filters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFilteredPosts();
+}
+
+function renderUsersGrid() {
+  document.getElementById('users-grid').innerHTML = allUsers.map(u => `
+    <div class="user-card" onclick="openUserDetail(${u.id})">
+      <div class="user-avatar">${u.name.charAt(0)}</div>
+      <div class="user-name">${u.name}</div>
+      <div class="user-username">@${u.username}</div>
+      <div class="user-email">${u.email}</div>
+      <div class="user-company">🏢 ${u.company.name}</div>
+    </div>`).join('');
+}
+
+function filterUsers() {
+  const q = document.getElementById('search-users').value.toLowerCase();
+  const filtered = allUsers.filter(u =>
+    u.name.toLowerCase().includes(q) ||
+    u.username.toLowerCase().includes(q) ||
+    u.company.name.toLowerCase().includes(q)
+  );
+  document.getElementById('users-grid').innerHTML = filtered.map(u => `
+    <div class="user-card" onclick="openUserDetail(${u.id})">
+      <div class="user-avatar">${u.name.charAt(0)}</div>
+      <div class="user-name">${u.name}</div>
+      <div class="user-username">@${u.username}</div>
+      <div class="user-email">${u.email}</div>
+      <div class="user-company">🏢 ${u.company.name}</div>
+    </div>`).join('');
+}
+
+// ============================================================
+// DETAIL VIEWS
+// ============================================================
+async function openPostDetail(postId) {
+  const post = allPosts.find(p => p.id === postId);
+  const author = allUsers.find(u => u.id === post.userId);
+  const comments = allComments.filter(c => c.postId === postId);
+
+  document.getElementById('overlay-content').innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-size:0.72rem;color:var(--accent);font-family:'IBM Plex Mono',monospace;margin-bottom:8px">POST #${post.id}</div>
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;text-transform:capitalize">${post.title}</h2>
+      <p style="margin-top:12px;color:var(--muted);font-size:0.875rem;line-height:1.7">${post.body}</p>
+      <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:8px;display:flex;align-items:center;gap:12px">
+        <div class="user-avatar" style="width:36px;height:36px;font-size:0.85rem;flex-shrink:0">${author?.name.charAt(0)||'?'}</div>
+        <div>
+          <div style="font-weight:600;font-size:0.88rem">${author?.name||'Desconhecido'}</div>
+          <div style="font-size:0.72rem;color:var(--muted);font-family:'IBM Plex Mono',monospace">${author?.email||''}</div>
+        </div>
+      </div>
+    </div>
+    <div class="section-title">💬 ${comments.length} Comentários</div>
+    ${comments.map(c => `
+      <div class="comment">
+        <div class="comment-name">${c.name}</div>
+        <div class="comment-email">${c.email}</div>
+        <div class="comment-body">${c.body}</div>
+      </div>`).join('')}
+  `;
+  openOverlay();
+}
+
+async function openUserDetail(userId) {
+  const user = allUsers.find(u => u.id === userId);
+  const posts = allPosts.filter(p => p.userId === userId);
+  document.getElementById('overlay-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+      <div class="user-avatar" style="width:56px;height:56px;font-size:1.3rem;flex-shrink:0">${user.name.charAt(0)}</div>
+      <div>
+        <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem">${user.name}</h2>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--accent)">@${user.username}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      <div class="card card-sm"><div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-family:'IBM Plex Mono',monospace">Email</div><div style="font-size:0.82rem;margin-top:4px">${user.email}</div></div>
+      <div class="card card-sm"><div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-family:'IBM Plex Mono',monospace">Empresa</div><div style="font-size:0.82rem;margin-top:4px">${user.company.name}</div></div>
+      <div class="card card-sm"><div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-family:'IBM Plex Mono',monospace">Website</div><div style="font-size:0.82rem;margin-top:4px;color:var(--accent)">${user.website}</div></div>
+      <div class="card card-sm"><div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-family:'IBM Plex Mono',monospace">Telefone</div><div style="font-size:0.82rem;margin-top:4px">${user.phone}</div></div>
+    </div>
+    <div class="section-title">📝 ${posts.length} Postagens</div>
+    ${posts.slice(0,5).map(p => `
+      <div class="post-card" style="margin-bottom:10px" onclick="closeOverlay();setTimeout(()=>openPostDetail(${p.id}),200)">
+        <div class="post-title">${p.title}</div>
+        <div class="post-meta"><span>💬 ${allComments.filter(c=>c.postId===p.id).length} comentários</span><span style="margin-left:auto">ID: ${p.id}</span></div>
+      </div>`).join('')}
+    ${posts.length > 5 ? `<div style="text-align:center;color:var(--muted);font-size:0.8rem;padding:8px">+${posts.length-5} postagens adicionais</div>` : ''}
+  `;
+  openOverlay();
+}
+
+function openOverlay() {
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('overlay').onclick = (e) => {
+    if (e.target === document.getElementById('overlay')) closeOverlay();
+  };
+}
+
+function closeOverlay() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(name, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadAll();
+</script>
+</body>
+</html>
