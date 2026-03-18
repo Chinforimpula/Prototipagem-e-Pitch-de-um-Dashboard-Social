@@ -188,4 +188,4 @@ intrahub/
 
 ## 👥 Equipe
 
-Desenvolvido por Matheus dos Santos Tenório, Matheus Vaconcelos, Pedro Augusto e José Gabriel Dâmaso.
+Desenvolvido por Matheus dos Santos Tenório, Matheus Vasconcelos, Pedro Augusto e José Gabriel Dâmaso.
